@@ -1,0 +1,25 @@
+{
+  "id": "manufacturing",
+  "name": "Manufacturing",
+  "description": "Industrial control panels, factory floor interfaces, SCADA displays",
+  "complianceStandards": ["WCAG 2.2 AA", "ISO 9241-171"],
+  "industryRules": [
+    "mfg-touch-targets", "mfg-contrast", "mfg-status-redundancy", "mfg-nav-depth"
+  ],
+  "thresholds": {
+    "touchTargetAA": 60,
+    "touchTargetAAA": 60,
+    "minBodyFontSize": 18,
+    "interactiveSpacing": 12,
+    "mfgContrastMinimum": 7,
+    "maxNavDepth": 2,
+    "statusIndicatorMinSize": 24,
+    "alarmMinFontSize": 24
+  },
+  "guidelines": [
+    "ISO 9241-171: Touch targets must be 60px+ for gloved operation",
+    "Manufacturing: All text requires 7:1 contrast for variable lighting conditions",
+    "Manufacturing: Status indicators require triple redundancy (color + icon + text)",
+    "Manufacturing: Navigation depth limited to 2 levels for time-critical environments"
+  ]
+}

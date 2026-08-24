@@ -1,0 +1,29 @@
+{
+  "id": "ios",
+  "name": "iOS (Human Interface Guidelines)",
+  "description": "iOS apps following Apple Human Interface Guidelines accessibility",
+  "complianceStandards": ["WCAG 2.2 AA", "Apple HIG Accessibility"],
+  "baseRules": [
+    "color-contrast", "touch-targets", "text-sizing", "focus-indicators",
+    "form-fields", "image-icons", "color-only-info", "content-structure"
+  ],
+  "platformRules": [
+    "ios-touch-targets", "ios-safe-area", "ios-dynamic-type", "ios-system-font"
+  ],
+  "disabledRules": [],
+  "thresholds": {
+    "touchTargetAA": 44,
+    "touchTargetAAA": 48,
+    "minBodyFontSize": 17,
+    "minMobileFontSize": 11,
+    "interactiveSpacing": 8,
+    "safeAreaTop": 59,
+    "safeAreaBottom": 34
+  },
+  "guidelines": [
+    "Apple HIG: Minimum 44×44pt touch targets for all interactive elements",
+    "Apple HIG: Respect Dynamic Type scaling — design at Body (17pt) baseline",
+    "Apple HIG: Custom fonts are fine but must support UIFontMetrics for Dynamic Type",
+    "Apple HIG: Respect safe area insets — no interactive content behind Dynamic Island (59pt) or home indicator (34pt)"
+  ]
+}

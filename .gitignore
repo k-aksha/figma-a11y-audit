@@ -1,0 +1,4 @@
+.env
+node_modules/
+a11y-audit/reports/
+.DS_Store

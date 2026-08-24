@@ -1,0 +1,21 @@
+{
+  "id": "government",
+  "name": "Government",
+  "description": "Government services, citizen portals, public information sites",
+  "complianceStandards": ["WCAG 2.2 AA", "Section 508", "EN 301 549"],
+  "industryRules": [
+    "government-section508", "government-language"
+  ],
+  "thresholds": {
+    "minBodyFontSize": 16,
+    "touchTargetAA": 44,
+    "lineHeightRatio": 1.5,
+    "contrastMinimum": 4.5,
+    "focusIndicatorWidth": 3
+  },
+  "guidelines": [
+    "Section 508: All pages must have titles, image descriptions, form labels, and skip navigation",
+    "EN 301 549: European accessibility requirements for public sector websites",
+    "Government: Language identification required; avoid unexplained jargon"
+  ]
+}

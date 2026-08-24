@@ -1,0 +1,29 @@
+{
+  "id": "android",
+  "name": "Android (Material Design 3)",
+  "description": "Android mobile apps following Material Design accessibility guidelines",
+  "complianceStandards": ["WCAG 2.2 AA", "Material Design 3 Accessibility"],
+  "baseRules": [
+    "color-contrast", "touch-targets", "text-sizing", "focus-indicators",
+    "form-fields", "image-icons", "color-only-info", "content-structure"
+  ],
+  "platformRules": [
+    "android-touch-targets", "android-elevation", "android-bottom-nav", "android-text-scaling"
+  ],
+  "disabledRules": [],
+  "thresholds": {
+    "touchTargetAA": 48,
+    "touchTargetAAA": 56,
+    "minBodyFontSize": 14,
+    "minMobileFontSize": 12,
+    "interactiveSpacing": 8,
+    "bottomNavMaxItems": 5,
+    "bottomNavMinItems": 3
+  },
+  "guidelines": [
+    "Material Design 3: All touch targets must be at least 48dp (9mm physical)",
+    "Material Design 3: Interactive elements need visual affordance via fill contrast, tonal elevation, or border (WCAG 1.4.11)",
+    "Material Design 3: Bottom navigation should have 3-5 destinations",
+    "Android: Text must use scalable sp units; minimum 12sp, recommended 14sp+ for body"
+  ]
+}

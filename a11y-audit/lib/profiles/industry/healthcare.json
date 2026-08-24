@@ -1,0 +1,24 @@
+{
+  "id": "healthcare",
+  "name": "Healthcare",
+  "description": "Healthcare applications, patient portals, and medical data displays",
+  "complianceStandards": ["WCAG 2.2 AA", "Section 508", "HIPAA Accessibility"],
+  "industryRules": [
+    "healthcare-contrast", "healthcare-form-errors", "healthcare-data-tables", "healthcare-color-safe"
+  ],
+  "thresholds": {
+    "touchTargetAA": 44,
+    "minBodyFontSize": 16,
+    "lineHeightRatio": 1.6,
+    "healthcareContrastMinimum": 7,
+    "dataTableMinFontSize": 14,
+    "errorMessageMinFontSize": 14,
+    "criticalDataContrast": 7
+  },
+  "guidelines": [
+    "HIPAA: Patient-facing interfaces must meet enhanced contrast for medical data",
+    "Section 508: All form inputs require explicit labels and descriptive error messages",
+    "Healthcare: Status indicators for vitals and lab results must be color-blind safe",
+    "Healthcare: Data tables must use minimum 14px font for readability"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "finance",
+  "name": "Finance",
+  "description": "Financial dashboards, banking apps, trading platforms",
+  "complianceStandards": ["WCAG 2.2 AA", "Section 508"],
+  "industryRules": [
+    "finance-number-readability", "finance-table-a11y", "finance-secure-inputs", "finance-confirmation"
+  ],
+  "thresholds": {
+    "minBodyFontSize": 14,
+    "minNumberFontSize": 14,
+    "lineHeightRatio": 1.5,
+    "financialDataContrast": 7,
+    "tableHeaderContrast": 4.5,
+    "currencyMinFontSize": 16
+  },
+  "guidelines": [
+    "Finance: Currency and financial numbers must be highly readable (>=16px)",
+    "Finance: Data tables require clear headers with enhanced contrast",
+    "Finance: Sensitive inputs (password, PIN, card) must have security indicators",
+    "Finance: Transaction confirmations need summary, confirm/cancel buttons, and prominent amounts"
+  ]
+}

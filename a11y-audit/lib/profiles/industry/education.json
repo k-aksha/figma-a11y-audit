@@ -1,0 +1,20 @@
+{
+  "id": "education",
+  "name": "Education",
+  "description": "Learning management systems, student portals, educational content",
+  "complianceStandards": ["WCAG 2.2 AA", "Section 508"],
+  "industryRules": [
+    "education-reading-level", "education-media-alt"
+  ],
+  "thresholds": {
+    "minBodyFontSize": 16,
+    "lineHeightRatio": 1.6,
+    "maxTextBlockWidth": 80,
+    "paragraphSpacingRatio": 2.0
+  },
+  "guidelines": [
+    "Education: Content must be readable with generous line height (1.6x)",
+    "Education: Line length should not exceed 80 characters for readability",
+    "Section 508: All educational media must have text descriptions"
+  ]
+}

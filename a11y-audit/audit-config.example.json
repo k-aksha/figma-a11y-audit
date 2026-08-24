@@ -1,0 +1,28 @@
+{
+  "fileKey": "ECF7wZOztOcfzVrIKtfeJ7",
+  "accessToken": "",
+  "level": "aa",
+  "pages": [],
+  "platform": "",
+  "industry": "",
+  "rules": {
+    "disable": [],
+    "customThresholds": {
+      "minBodyFontSize": 14,
+      "minMobileFontSize": 16,
+      "touchTargetAA": 24,
+      "touchTargetAAA": 44,
+      "lineHeightRatio": 1.5
+    }
+  },
+  "annotations": {
+    "enabled": true,
+    "badgeSize": 22,
+    "summaryCard": true,
+    "updateDescriptions": true
+  },
+  "report": {
+    "outputDir": "./a11y-audit/reports",
+    "format": "markdown"
+  }
+}

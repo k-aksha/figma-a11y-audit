@@ -1,0 +1,35 @@
+{
+  "name": "figma-a11y-audit",
+  "version": "1.0.0",
+  "description": "Figma Accessibility Audit Agent — analyzes Figma designs against WCAG 2.2 AA/AAA standards and posts findings as comments directly on flagged nodes",
+  "main": "a11y-audit/audit.js",
+  "scripts": {
+    "audit": "node a11y-audit/audit.js",
+    "audit:dry": "node a11y-audit/audit.js --dry-run",
+    "docs": "node a11y-audit/scripts/generate-docs.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "author": "akramsha",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akramsha/figma-a11y-audit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/akramsha/figma-a11y-audit/issues"
+  },
+  "homepage": "https://github.com/akramsha/figma-a11y-audit#readme",
+  "keywords": [
+    "figma",
+    "accessibility",
+    "a11y",
+    "wcag",
+    "design-systems",
+    "audit",
+    "claude-code",
+    "mcp"
+  ]
+}

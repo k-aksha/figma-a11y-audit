@@ -1,0 +1,36 @@
+{
+  "id": "web-app",
+  "name": "Web (Applications)",
+  "description": "Rich interactive web applications with complex UI patterns",
+  "complianceStandards": ["WCAG 2.2 AA", "WAI-ARIA 1.2"],
+  "baseRules": [
+    "color-contrast", "touch-targets", "text-sizing", "focus-indicators",
+    "form-fields", "image-icons", "color-only-info", "content-structure"
+  ],
+  "platformRules": [
+    "web-skip-navigation", "web-heading-hierarchy", "web-landmark-regions", "web-focus-order",
+    "webapp-dialog-pattern", "webapp-tab-pattern", "webapp-complex-tables",
+    "webapp-loading-states", "webapp-combobox-pattern"
+  ],
+  "disabledRules": [],
+  "thresholds": {
+    "touchTargetAA": 24,
+    "touchTargetAAA": 44,
+    "minBodyFontSize": 14,
+    "lineHeightRatio": 1.5,
+    "maxHeadingSkip": 1,
+    "minLandmarkCount": 3,
+    "focusIndicatorWidth": 2,
+    "focusIndicatorContrast": 3,
+    "dialogMinWidth": 280,
+    "dialogMaxWidth": 560,
+    "tableMinHeaderContrast": 4.5,
+    "maxTabCount": 7
+  },
+  "guidelines": [
+    "WAI-ARIA: Dialog, Tab, Combobox patterns must be structurally correct",
+    "WCAG 2.2: Loading states must have text labels, not spinners alone",
+    "WCAG 2.2: Complex data tables need clear header structure",
+    "WCAG 2.2: All pages must have skip navigation and landmark regions"
+  ]
+}

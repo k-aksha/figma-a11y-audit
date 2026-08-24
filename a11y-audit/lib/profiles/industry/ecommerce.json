@@ -1,0 +1,21 @@
+{
+  "id": "ecommerce",
+  "name": "E-commerce",
+  "description": "Online stores, product catalogs, checkout flows",
+  "complianceStandards": ["WCAG 2.2 AA", "EAA (European Accessibility Act)"],
+  "industryRules": [
+    "ecommerce-checkout-flow", "ecommerce-product-images"
+  ],
+  "thresholds": {
+    "minBodyFontSize": 14,
+    "touchTargetAA": 44,
+    "priceMinFontSize": 16,
+    "lineHeightRatio": 1.5,
+    "productImageMinSize": 200
+  },
+  "guidelines": [
+    "EAA: E-commerce platforms must be fully accessible by June 2025",
+    "E-commerce: Product images need descriptions for screen readers",
+    "E-commerce: Checkout flows need step indicators, labeled inputs, and visible order summaries"
+  ]
+}

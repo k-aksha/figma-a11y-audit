@@ -1,0 +1,29 @@
+{
+  "id": "web-site",
+  "name": "Web (Websites)",
+  "description": "Public-facing websites with content-focused accessibility",
+  "complianceStandards": ["WCAG 2.2 AA"],
+  "baseRules": [
+    "color-contrast", "touch-targets", "text-sizing", "focus-indicators",
+    "form-fields", "image-icons", "color-only-info", "content-structure"
+  ],
+  "platformRules": [
+    "web-skip-navigation", "web-heading-hierarchy", "web-landmark-regions", "web-focus-order"
+  ],
+  "disabledRules": [],
+  "thresholds": {
+    "touchTargetAA": 24,
+    "touchTargetAAA": 44,
+    "minBodyFontSize": 16,
+    "lineHeightRatio": 1.5,
+    "maxHeadingSkip": 1,
+    "minLandmarkCount": 3,
+    "focusIndicatorWidth": 2,
+    "focusIndicatorContrast": 3
+  },
+  "guidelines": [
+    "WCAG 2.2: All pages must have skip navigation",
+    "WCAG 2.2: Heading hierarchy must not skip levels",
+    "WCAG 2.2: Landmark regions (header, nav, main, footer) required"
+  ]
+}
