@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/akramsha/figma-a11y-audit.git"
+    "url": "git+https://github.com/k-aksha/figma-a11y-audit.git"
   },
   "bugs": {
-    "url": "https://github.com/akramsha/figma-a11y-audit/issues"
+    "url": "https://github.com/k-aksha/figma-a11y-audit/issues"
   },
-  "homepage": "https://github.com/akramsha/figma-a11y-audit#readme",
+  "homepage": "https://github.com/k-aksha/figma-a11y-audit#readme",
   "keywords": [
     "figma",
     "accessibility",
