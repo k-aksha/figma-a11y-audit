@@ -32,17 +32,33 @@ function loadJsonFile(filePath) {
   return JSON.parse(raw);
 }
 
-function findProfileFile(dir, id) {
-  const filePath = path.join(dir, `${id}.json`);
-  if (fs.existsSync(filePath)) return filePath;
+/**
+ * Find a profile JSON by id across one or more candidate directories.
+ * Earlier directories take precedence (built-in checked before custom).
+ * @param {string|string[]} dirs
+ */
+function findProfileFile(dirs, id) {
+  for (const dir of [].concat(dirs)) {
+    if (!dir) continue;
+    const filePath = path.join(dir, `${id}.json`);
+    if (fs.existsSync(filePath)) return filePath;
+  }
   return null;
 }
 
-function listAvailableIds(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir)
-    .filter(f => f.endsWith('.json'))
-    .map(f => f.replace('.json', ''));
+/**
+ * List profile ids across one or more directories, deduped.
+ * @param {string|string[]} dirs
+ */
+function listAvailableIds(dirs) {
+  const ids = new Set();
+  for (const dir of [].concat(dirs)) {
+    if (!dir || !fs.existsSync(dir)) continue;
+    for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
+      ids.add(f.replace('.json', ''));
+    }
+  }
+  return [...ids];
 }
 
 /**
@@ -53,15 +69,20 @@ function listAvailableIds(dir) {
  * @param {string|null} opts.industry  - Industry id (healthcare, finance, manufacturing, ...)
  * @param {string|null} opts.profile   - Combined shorthand (e.g. "android-healthcare")
  * @param {object}      opts.userThresholds - User-specified customThresholds from config
+ * @param {string|null} opts.customRulesDir - User rules directory; profiles/platform and
+ *   profiles/industry under it are searched alongside the built-in profiles (see README "Custom rules").
  * @returns {object|null} Resolved profile or null (base-only mode)
  */
 function loadProfile(opts = {}) {
-  let { platform, industry, profile, userThresholds } = opts;
+  let { platform, industry, profile, userThresholds, customRulesDir } = opts;
+
+  const platformDirs = [PLATFORM_DIR, customRulesDir && path.join(customRulesDir, 'profiles', 'platform')];
+  const industryDirs = [INDUSTRY_DIR, customRulesDir && path.join(customRulesDir, 'profiles', 'industry')];
 
   if (profile && !platform && !industry) {
     const parts = profile.split('-');
-    const platformIds = listAvailableIds(PLATFORM_DIR);
-    const industryIds = listAvailableIds(INDUSTRY_DIR);
+    const platformIds = listAvailableIds(platformDirs);
+    const industryIds = listAvailableIds(industryDirs);
 
     // Try to split "android-healthcare" into platform + industry
     for (let i = 1; i <= parts.length; i++) {
@@ -93,18 +114,18 @@ function loadProfile(opts = {}) {
   let industryProfile = null;
 
   if (platform) {
-    const file = findProfileFile(PLATFORM_DIR, platform);
+    const file = findProfileFile(platformDirs, platform);
     if (!file) {
-      console.error(`  Error: Unknown platform "${platform}". Available: ${listAvailableIds(PLATFORM_DIR).join(', ')}`);
+      console.error(`  Error: Unknown platform "${platform}". Available: ${listAvailableIds(platformDirs).join(', ')}`);
       process.exit(1);
     }
     platformProfile = loadJsonFile(file);
   }
 
   if (industry) {
-    const file = findProfileFile(INDUSTRY_DIR, industry);
+    const file = findProfileFile(industryDirs, industry);
     if (!file) {
-      console.error(`  Error: Unknown industry "${industry}". Available: ${listAvailableIds(INDUSTRY_DIR).join(', ')}`);
+      console.error(`  Error: Unknown industry "${industry}". Available: ${listAvailableIds(industryDirs).join(', ')}`);
       process.exit(1);
     }
     industryProfile = loadJsonFile(file);
@@ -162,23 +183,27 @@ function resolveThresholds(base, platform, industry, user) {
 
 /**
  * Print all available profiles to stdout.
+ * @param {string|null} customRulesDir - see loadProfile()
  */
-function listProfiles() {
+function listProfiles(customRulesDir = null) {
+  const platformDirs = [PLATFORM_DIR, customRulesDir && path.join(customRulesDir, 'profiles', 'platform')];
+  const industryDirs = [INDUSTRY_DIR, customRulesDir && path.join(customRulesDir, 'profiles', 'industry')];
+
   console.log('\n  Available Profiles');
   console.log('  ==================\n');
 
   console.log('  PLATFORMS:');
-  const platformIds = listAvailableIds(PLATFORM_DIR);
+  const platformIds = listAvailableIds(platformDirs);
   for (const id of platformIds) {
-    const p = loadJsonFile(path.join(PLATFORM_DIR, `${id}.json`));
+    const p = loadJsonFile(findProfileFile(platformDirs, id));
     console.log(`    --platform ${id.padEnd(12)} ${p.name}`);
     console.log(`    ${''.padEnd(26)} Standards: ${p.complianceStandards.join(', ')}`);
   }
 
   console.log('\n  INDUSTRIES:');
-  const industryIds = listAvailableIds(INDUSTRY_DIR);
+  const industryIds = listAvailableIds(industryDirs);
   for (const id of industryIds) {
-    const p = loadJsonFile(path.join(INDUSTRY_DIR, `${id}.json`));
+    const p = loadJsonFile(findProfileFile(industryDirs, id));
     console.log(`    --industry ${id.padEnd(15)} ${p.name}`);
     console.log(`    ${''.padEnd(29)} Standards: ${p.complianceStandards.join(', ')}`);
   }
@@ -188,6 +213,10 @@ function listProfiles() {
     for (const iid of industryIds) {
       console.log(`    --profile ${pid}-${iid}`);
     }
+  }
+
+  if (customRulesDir) {
+    console.log(`\n  Custom rules dir: ${customRulesDir}`);
   }
 
   console.log('');

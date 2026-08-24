@@ -3,7 +3,7 @@
  * WCAG 2.4.7 (AA), 2.4.11 (AA WCAG 2.2) — Focus state visibility.
  */
 
-const { isInteractiveNode } = require('../node-inspector');
+const { isInteractiveNode } = require('../../node-inspector');
 
 module.exports = {
   id: 'focus-indicators',

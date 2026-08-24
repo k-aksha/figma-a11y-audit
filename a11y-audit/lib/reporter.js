@@ -7,11 +7,69 @@
 const fs = require('fs');
 const path = require('path');
 
+const VERDICT_COPY = {
+  do: 'Do — reliably resolved, keep enforcing',
+  dont: "Don't — rarely resolved, review or disable it",
+  neutral: 'Mixed signal — no strong pattern yet',
+  'insufficient-data': 'Insufficient data yet',
+};
+
+const TREND_ARROW = { up: '↑', down: '↓', flat: '→', new: '•' };
+
+/**
+ * Render the self-scoring feedback-loop section: each rule's reliability
+ * score (0-100, worst-to-good) based on how often its findings actually
+ * get fixed between runs of this file, with a Do/Don't verdict.
+ */
+function generateSelfScoringSection(historyResult) {
+  const lines = [];
+  lines.push('## Self-Scoring Feedback Loop');
+  lines.push('');
+  lines.push('_This auditor compares each run\'s findings to the previous run of this same file and tracks, per rule, how often its findings actually get fixed. A high score means the rule\'s findings reliably get resolved — trust it. A low score means its findings tend to linger unresolved — worth a manual look (it may be noisy, miscalibrated, or simply not prioritized). This is advisory only; it never changes which rules run._');
+  lines.push('');
+
+  if (historyResult.isFirstRun) {
+    lines.push('**First run for this file** — no comparison yet. Every rule starts as "New"; scores appear from the next audit onward.');
+    lines.push('');
+    return lines.join('\n');
+  }
+
+  const { fixed, recurring, new: newCt } = historyResult.diffSummary;
+  lines.push(`**Since last run:** ${fixed} fixed, ${recurring} still open, ${newCt} new.`);
+  lines.push('');
+
+  const rows = Object.entries(historyResult.ruleScores)
+    .map(([ruleId, r]) => ({ ruleId, ...r }))
+    .sort((a, b) => {
+      // Worst → good: null scores (no data yet) sort last.
+      if (a.score === null && b.score === null) return 0;
+      if (a.score === null) return 1;
+      if (b.score === null) return -1;
+      return a.score - b.score;
+    });
+
+  lines.push('| Rule | Score | Trend | Runs | Verdict |');
+  lines.push('|------|-------|-------|------|---------|');
+  for (const r of rows) {
+    const scoreStr = r.score === null ? `— (${r.label})` : `${r.score} (${r.label})`;
+    lines.push(`| ${r.ruleId} | ${scoreStr} | ${TREND_ARROW[r.trend] || '—'} | ${r.runsSeen} | ${VERDICT_COPY[r.verdict]} |`);
+  }
+  lines.push('');
+
+  const dontRules = rows.filter(r => r.verdict === 'dont');
+  if (dontRules.length > 0) {
+    lines.push(`**Consider reviewing:** ${dontRules.map(r => `\`${r.ruleId}\``).join(', ')}. If a rule keeps flagging the same unresolved issue, it may not fit this project — disable it via \`rules.disable\` in your config, or override it in a \`--rules-dir\` custom rules directory (see README).`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
 /**
  * Generate the full markdown report.
  */
 function generateReport(opts) {
-  const { fileName, fileKey, level, pagesAudited, nodesInspected, issues, timestamp, profile } = opts;
+  const { fileName, fileKey, level, pagesAudited, nodesInspected, issues, timestamp, profile, historyResult } = opts;
 
   const errors = issues.filter(i => i.severity === 'error');
   const warnings = issues.filter(i => i.severity === 'warning');
@@ -43,6 +101,12 @@ function generateReport(opts) {
     lines.push(`**Result: FAIL** — ${errors.length} critical error(s) must be resolved for ${level.toUpperCase()} compliance.`);
   }
   lines.push('');
+
+  // --- Self-scoring feedback loop ---
+  if (historyResult) {
+    lines.push(generateSelfScoringSection(historyResult));
+    lines.push('');
+  }
 
   // --- Findings by Source (profile-aware) ---
   if (profile) {
@@ -211,6 +275,12 @@ function generateReport(opts) {
         lines.push(`- **Data:** ${dataStr}`);
       }
 
+      if (iss.reliability) {
+        const r = iss.reliability;
+        const scoreStr = r.score === null ? r.label : `${r.label}, ${r.score}%`;
+        lines.push(`- **Track record:** ${scoreStr} — this rule's findings on this file have been resolved ${r.resolvedCount}/${r.resolvedCount + r.persistedCount} time(s) across ${r.runsSeen} run(s)${r.verdict === 'dont' ? '. Consider reviewing this rule.' : '.'}`);
+      }
+
       lines.push('');
       issueNum++;
     }
@@ -252,7 +322,7 @@ function writeReport(reportContent, outputDir, fileKey, timestamp) {
 /**
  * Print a compact summary to stdout.
  */
-function printSummary(issues, profile) {
+function printSummary(issues, profile, historyResult) {
   const errors = issues.filter(i => i.severity === 'error').length;
   const warnings = issues.filter(i => i.severity === 'warning').length;
   const infos = issues.filter(i => i.severity === 'info').length;
@@ -290,6 +360,23 @@ function printSummary(issues, profile) {
   }
 
   console.log('  └─────────────────────────────────────┘\n');
+
+  if (historyResult) {
+    if (historyResult.isFirstRun) {
+      console.log('  Self-scoring: first run for this file — no track record yet.\n');
+    } else {
+      const { fixed, recurring, new: newCt } = historyResult.diffSummary;
+      console.log(`  Self-scoring vs. last run: ${fixed} fixed, ${recurring} still open, ${newCt} new.`);
+
+      const dontRules = Object.entries(historyResult.ruleScores)
+        .filter(([, r]) => r.verdict === 'dont')
+        .map(([ruleId]) => ruleId);
+      if (dontRules.length > 0) {
+        console.log(`  Rules to review (rarely resolved): ${dontRules.join(', ')}`);
+      }
+      console.log('');
+    }
+  }
 }
 
 function capitalize(str) {

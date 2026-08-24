@@ -3,8 +3,8 @@
  * WCAG 1.4.3 (AA), 1.4.6 (AAA), 1.4.11 — Color contrast checks.
  */
 
-const { contrastRatio, blendAlpha, isLargeText, meetsAA, meetsAAA, meetsUIComponent, rgbToHex, suggestFix } = require('../contrast');
-const { isInteractiveNode } = require('../node-inspector');
+const { contrastRatio, blendAlpha, isLargeText, meetsAA, meetsAAA, meetsUIComponent, rgbToHex, suggestFix } = require('../../contrast');
+const { isInteractiveNode } = require('../../node-inspector');
 
 module.exports = {
   id: 'color-contrast',

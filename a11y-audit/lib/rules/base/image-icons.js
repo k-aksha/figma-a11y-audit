@@ -3,7 +3,7 @@
  * WCAG 1.1.1 — Icon-only buttons and images need accessible labels.
  */
 
-const { isInteractiveNode } = require('../node-inspector');
+const { isInteractiveNode } = require('../../node-inspector');
 
 module.exports = {
   id: 'image-icons',

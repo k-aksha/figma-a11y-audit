@@ -32,15 +32,28 @@ Prefer whichever is already available — don't make the user set something up i
 
 After an audit, the user will often want help resolving flagged issues (e.g. adjusting a color token to meet a contrast ratio, resizing a touch target). Use the `suggestion` and `data` fields in each finding — they already contain the concrete fix (e.g. a specific hex value that meets the required ratio). Cross-reference `a11y-audit/lib/contrast.js` if you need to verify a proposed color change actually meets AA/AAA before telling the user it does.
 
+## Self-scoring feedback loop
+
+Every non-`--no-history` run compares this audit's findings to the last audit of the same file and updates a per-rule reliability score (0-100, worst → good) based on how often that rule's findings actually get fixed — see [README § Self-scoring feedback loop](README.md#self-scoring-feedback-loop). When summarizing a report to the user, always check the "Self-Scoring Feedback Loop" section and per-issue "Track record" lines, and call out anything with a **Don't** verdict — that's the tool telling you (and them) a rule's findings on this file keep going unresolved and deserve a manual look, not blind trust.
+
+- **This is advisory only.** Never edit `disabledRules`/`rules.disable`/a custom profile to silently mute a rule because its score is low — surface the recommendation and let the user decide.
+- Use `--no-history` when you're iterating rapidly against a file the user hasn't actually changed yet (e.g. re-running dry-run while debugging a rule or profile choice) — otherwise you'll tank that file's scores with runs that were never expected to show improvement.
+- Use `--reset-history` only if the user says something like "start fresh" / "this file went through a big redesign, forget the old scores" — it's a one-shot action that exits immediately, same as `--clean`. Confirm before running it, same as any other action that discards state.
+
 ## Extending the auditor
 
-If asked to add a new rule, platform, or industry profile, follow [CONTRIBUTING.md](CONTRIBUTING.md) — rules are auto-discovered from `a11y-audit/lib/rules/`, so a new file with the right shape is picked up with no registry changes. Regenerate docs after adding/changing rule metadata:
-```bash
-npm run docs
-```
+## Extending the auditor
+
+Two different asks call for two different places:
+
+- **"Add a rule/profile to this project"** → follow [CONTRIBUTING.md](CONTRIBUTING.md) and edit `a11y-audit/lib/rules/base|platform|industry/` directly. Rules are auto-discovered — a new file with the right shape is picked up with no registry changes. Regenerate docs after adding/changing rule metadata:
+  ```bash
+  npm run docs
+  ```
+- **"I want my own rule/industry, without forking this repo"** → use a `--rules-dir` directory instead (see [README § Custom rules](README.md#custom-rules)). This is the right default whenever the rule is specific to the user's org/product rather than broadly useful, since it survives copying `a11y-audit/` into another project or pulling upstream updates. Check if `--rules-dir`/`customRulesDir` is already configured before assuming there is none.
 
 ## Guardrails
 
 - Never commit `.env` or print its contents — it holds the user's Figma token.
-- Don't run `--clean` or a non-dry-run audit against a file without the user's go-ahead first.
+- Don't run `--clean`, `--reset-history`, or a non-dry-run audit against a file without the user's go-ahead first.
 - This tool has zero dependencies on purpose — don't suggest adding npm packages unless the user asks for a larger refactor.

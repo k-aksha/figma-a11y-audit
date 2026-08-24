@@ -13,6 +13,7 @@ a11y-audit/
     node-inspector.js       Deep node enrichment (fills, contrast bg, fonts, variants...)
     contrast.js             WCAG luminance/contrast math (pure functions)
     rules/                  Rule modules — see "Adding a rule" below
+      base/                 Core WCAG rules applied to every audit
       platform/             Platform-specific rules (android, ios, web, web-app)
       industry/             Industry-specific rules (healthcare, finance, ...)
     profiles/                Platform/industry profile JSON (rule selection + thresholds)
@@ -24,7 +25,9 @@ a11y-audit/
 
 ## Adding a rule
 
-1. Create a new file under `a11y-audit/lib/rules/` (base), `rules/platform/<platform>/`, or `rules/industry/<industry>/`.
+> Only checks that are broadly useful belong here. Org- or project-specific rules that wouldn't make sense for every user of this tool should go in a `--rules-dir` directory instead (see the README's [Custom rules](README.md#custom-rules) section) — that way they're not lost or diverged from upstream on the next update.
+
+1. Create a new file under `a11y-audit/lib/rules/base/`, `rules/platform/`, or `rules/industry/`.
 2. Export an object with:
    ```js
    module.exports = {
@@ -54,6 +57,8 @@ a11y-audit/
 ## Adding a platform or industry profile
 
 Add a new JSON file under `a11y-audit/lib/profiles/platform/` or `industry/` following the shape of an existing profile (`name`, `complianceStandards`, `baseRules`/`platformRules`/`industryRules`, `disabledRules`, `thresholds`, `guidelines`). It's picked up automatically — no registry to update.
+
+Again, if the profile is specific to your org rather than generally useful, prefer a `profiles/industry/*.json` (or `platform/*.json`) file inside your own `--rules-dir` directory over a PR here.
 
 ## Code style
 

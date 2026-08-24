@@ -1,7 +1,7 @@
 /**
  * rules/index.js
  * Auto-discovering rule registry with profile-based filtering.
- * Scans rules/, rules/platform/, and rules/industry/ for rule modules.
+ * Scans rules/base/, rules/platform/, and rules/industry/ for rule modules.
  */
 
 const fs = require('fs');
@@ -55,18 +55,23 @@ function loadRulesFromDir(dirPath, tier) {
  * Load all rules, optionally filtered by a resolved profile.
  *
  * @param {object|null} profile - Resolved profile from profile-loader (null = base only)
+ * @param {string|null} customRulesDir - Path to a user-maintained rules directory (see README "Custom rules").
+ *   Expected layout: <dir>/base/*.js, <dir>/platform/*.js, <dir>/industry/*.js
+ * @param {string[]} extraDisabledIds - Rule ids to disable, e.g. from a config file's `rules.disable`.
+ *   Applies on top of whatever the active profile already disables.
  */
-function loadRules(profile = null) {
+function loadRules(profile = null, customRulesDir = null, extraDisabledIds = []) {
   if (_rules) return _rules;
 
   _activeProfile = profile;
 
   const rulesDir = __dirname;
+  const baseDir = path.join(rulesDir, 'base');
   const platformDir = path.join(rulesDir, 'platform');
   const industryDir = path.join(rulesDir, 'industry');
 
   // Always load base rules
-  const baseRules = loadRulesFromDir(rulesDir, 'base');
+  const baseRules = loadRulesFromDir(baseDir, 'base');
 
   // Load platform and industry rules only when a profile is active
   let platformRules = [];
@@ -77,33 +82,59 @@ function loadRules(profile = null) {
     industryRules = loadRulesFromDir(industryDir, 'industry');
   }
 
-  const allLoaded = [...baseRules, ...platformRules, ...industryRules];
+  // Custom user rules from an external directory (never touched by upgrades).
+  // Custom base rules are always active, like built-in base rules. Custom
+  // platform/industry rules activate the same way built-ins do: only when
+  // their id is referenced by a profile's rule-id list (built-in or custom).
+  let customBaseRules = [];
+  let customPlatformRules = [];
+  let customIndustryRules = [];
 
+  if (customRulesDir) {
+    customBaseRules = loadRulesFromDir(path.join(customRulesDir, 'base'), 'base');
+    customPlatformRules = loadRulesFromDir(path.join(customRulesDir, 'platform'), 'platform');
+    customIndustryRules = loadRulesFromDir(path.join(customRulesDir, 'industry'), 'industry');
+  }
+
+  const allLoaded = [...baseRules, ...platformRules, ...industryRules, ...customPlatformRules, ...customIndustryRules];
+  const disabledIds = new Set([...(profile?.disabledRules || []), ...extraDisabledIds]);
+
+  let filtered;
   if (profile) {
     const allowedIds = new Set([
       ...(profile.baseRules || []),
       ...(profile.platformRules || []),
       ...(profile.industryRules || []),
     ]);
-    const disabledIds = new Set(profile.disabledRules || []);
 
-    _rules = allLoaded.filter(r =>
+    filtered = allLoaded.filter(r =>
       allowedIds.has(r.id) && !disabledIds.has(r.id)
     );
   } else {
-    // No profile — only base rules (backward compatible)
-    _rules = baseRules;
+    // No profile — only base rules (backward compatible), still honoring disabledIds
+    filtered = baseRules.filter(r => !disabledIds.has(r.id));
   }
+
+  const activeCustomBaseRules = customBaseRules.filter(r => !disabledIds.has(r.id));
+  const customIds = new Set([...customBaseRules, ...customPlatformRules, ...customIndustryRules].map(r => r.id));
+
+  // De-dupe by id in case a custom rule reuses a built-in id — custom wins,
+  // since it's the more specific, user-authored definition.
+  const byId = new Map();
+  for (const rule of [...filtered, ...activeCustomBaseRules]) byId.set(rule.id, rule);
+  _rules = [...byId.values()];
 
   const baseCt = _rules.filter(r => r.tier === 'base').length;
   const platCt = _rules.filter(r => r.tier === 'platform').length;
   const indCt = _rules.filter(r => r.tier === 'industry').length;
+  const customCt = _rules.filter(r => customIds.has(r.id)).length;
 
   const parts = [`${baseCt} base`];
   if (platCt > 0) parts.push(`${platCt} platform`);
   if (indCt > 0) parts.push(`${indCt} industry`);
 
   console.log(`  Loaded ${_rules.length} accessibility rule(s): ${parts.join(', ')}`);
+  if (customCt > 0) console.log(`  (${customCt} custom rule(s) loaded from ${customRulesDir})`);
   console.log(`  Rules: ${_rules.map(r => r.id).join(', ')}`);
 
   return _rules;

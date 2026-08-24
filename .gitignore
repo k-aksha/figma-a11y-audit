@@ -1,4 +1,5 @@
 .env
 node_modules/
 a11y-audit/reports/
+a11y-audit/history/
 .DS_Store

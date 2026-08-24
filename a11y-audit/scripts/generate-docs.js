@@ -86,7 +86,7 @@ function getSubdir(rule) {
 
 function discoverRules() {
   const tiers = [
-    { dir: RULES_DIR, tier: 'Base' },
+    { dir: path.join(RULES_DIR, 'base'), tier: 'Base' },
     { dir: path.join(RULES_DIR, 'platform'), tier: 'Platform' },
     { dir: path.join(RULES_DIR, 'industry'), tier: 'Industry' },
   ];

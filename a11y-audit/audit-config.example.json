@@ -5,6 +5,9 @@
   "pages": [],
   "platform": "",
   "industry": "",
+  "customRulesDir": "",
+  "historyDir": "",
+  "noHistory": false,
   "rules": {
     "disable": [],
     "customThresholds": {
@@ -14,15 +17,5 @@
       "touchTargetAAA": 44,
       "lineHeightRatio": 1.5
     }
-  },
-  "annotations": {
-    "enabled": true,
-    "badgeSize": 22,
-    "summaryCard": true,
-    "updateDescriptions": true
-  },
-  "report": {
-    "outputDir": "./a11y-audit/reports",
-    "format": "markdown"
   }
 }

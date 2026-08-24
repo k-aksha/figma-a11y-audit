@@ -33,6 +33,7 @@ const annotator = require('./lib/annotator');
 const reporter = require('./lib/reporter');
 const { sleep } = require('./lib/rate-limiter');
 const { loadProfile, listProfiles } = require('./lib/profiles/profile-loader');
+const auditHistory = require('./lib/history');
 
 // ---------------------------------------------------------------------------
 // CLI argument parsing
@@ -54,6 +55,10 @@ function parseArgs() {
     industry: null,
     profile: null,
     listProfiles: false,
+    customRulesDir: null,
+    noHistory: false,
+    resetHistory: false,
+    historyDir: null,
     help: false,
   };
 
@@ -79,6 +84,14 @@ function parseArgs() {
         parsed.industry = args[++i].toLowerCase(); break;
       case '--profile':
         parsed.profile = args[++i].toLowerCase(); break;
+      case '--rules-dir':
+        parsed.customRulesDir = args[++i]; break;
+      case '--no-history':
+        parsed.noHistory = true; break;
+      case '--reset-history':
+        parsed.resetHistory = true; break;
+      case '--history-dir':
+        parsed.historyDir = args[++i]; break;
       case '--mcp':
         parsed.mcp = args[i + 1] && !args[i + 1].startsWith('-') ? args[++i] : 'auto'; break;
       case '--mcp-endpoint':
@@ -100,14 +113,23 @@ function parseArgs() {
       if (cfg.pages && !parsed.pages) parsed.pages = cfg.pages;
       if (cfg.platform && !parsed.platform) parsed.platform = cfg.platform;
       if (cfg.industry && !parsed.industry) parsed.industry = cfg.industry;
+      if (cfg.customRulesDir && !parsed.customRulesDir) parsed.customRulesDir = cfg.customRulesDir;
+      if (cfg.historyDir && !parsed.historyDir) parsed.historyDir = cfg.historyDir;
+      if (cfg.noHistory && !parsed.noHistory) parsed.noHistory = true;
       // Store user custom thresholds for profile merge
       if (cfg.rules && cfg.rules.customThresholds) {
         parsed._userThresholds = cfg.rules.customThresholds;
+      }
+      if (cfg.rules && Array.isArray(cfg.rules.disable)) {
+        parsed._userDisabledRules = cfg.rules.disable;
       }
     } catch (err) {
       console.error(`  Error loading config: ${err.message}`);
     }
   }
+
+  if (parsed.customRulesDir) parsed.customRulesDir = path.resolve(parsed.customRulesDir);
+  if (parsed.historyDir) parsed.historyDir = path.resolve(parsed.historyDir);
 
   return parsed;
 }
@@ -147,6 +169,17 @@ function printHelp() {
                             education, government, ecommerce
     --profile <name>        Combined shorthand (e.g., android-healthcare)
     --list-profiles         List all available profiles and exit
+    --rules-dir <path>      Load your own base/platform/industry rules and
+                            profiles from an external directory (see README
+                            "Custom rules"). Merged with the built-ins.
+
+  Self-Scoring Feedback Loop:
+    --no-history            Skip recording/reading this file's run history
+                            (use for repeated test runs against an unchanged
+                            file, so they don't skew a rule's score)
+    --reset-history         Wipe this file's audit history and exit
+    --history-dir <path>    Where run history is stored (default:
+                            a11y-audit/history/)
 
   Authentication:
     Provide ONE of the following:
@@ -168,6 +201,12 @@ function printHelp() {
     node a11y-audit/audit.js -f ECF7wZOztOcfzVrIKtfeJ7 --profile web-app-finance
     node a11y-audit/audit.js -f ECF7wZOztOcfzVrIKtfeJ7 --mcp --industry manufacturing --dry-run
     node a11y-audit/audit.js --list-profiles
+
+    # With your own custom rules
+    node a11y-audit/audit.js -f ECF7wZOztOcfzVrIKtfeJ7 --rules-dir ./my-a11y-rules --industry my-industry
+
+    # Start this file's self-scoring history over from scratch
+    node a11y-audit/audit.js -f ECF7wZOztOcfzVrIKtfeJ7 --reset-history
   `);
 }
 
@@ -184,13 +223,21 @@ async function main() {
   }
 
   if (opts.listProfiles) {
-    listProfiles();
+    listProfiles(opts.customRulesDir);
     process.exit(0);
   }
 
   if (!opts.fileKey) {
     console.error('  Error: --file-key is required. Use --help for usage.');
     process.exit(1);
+  }
+
+  if (opts.resetHistory) {
+    const existed = auditHistory.resetHistory(opts.fileKey, opts.historyDir);
+    console.log(existed
+      ? `  Cleared self-scoring history for ${opts.fileKey}. Next audit starts a fresh baseline.`
+      : `  No self-scoring history found for ${opts.fileKey} — nothing to reset.`);
+    process.exit(0);
   }
 
   // --- Configure Figma API transport (REST with PAT or MCP with OAuth) ---
@@ -216,6 +263,7 @@ async function main() {
     industry: opts.industry,
     profile: opts.profile,
     userThresholds: opts._userThresholds || {},
+    customRulesDir: opts.customRulesDir,
   });
 
   const timestamp = new Date().toISOString().split('T')[0];
@@ -234,6 +282,10 @@ async function main() {
     console.log(`  Standards: ${profile.complianceStandards.join(', ')}`);
   } else {
     console.log('  Profile: Base (WCAG core only)');
+  }
+
+  if (opts.customRulesDir) {
+    console.log(`  Custom rules: ${opts.customRulesDir}`);
   }
 
   console.log(`  Mode: ${opts.dryRun ? 'DRY RUN (report only)' : opts.clean ? 'CLEANUP' : 'FULL AUDIT'}`);
@@ -264,7 +316,7 @@ async function main() {
   }
 
   // --- Phase 3: Load rules (profile-aware) ---
-  loadRules(profile);
+  loadRules(profile, opts.customRulesDir, opts._userDisabledRules || []);
   const colorMap = figmaReader.buildColorMap(variables);
   const componentLookup = figmaReader.buildComponentLookup(components);
 
@@ -328,7 +380,32 @@ async function main() {
     if (p < pages.length - 1) await sleep(1000);
   }
 
-  // --- Phase 6: Generate report ---
+  // --- Phase 6: Self-scoring feedback loop ---
+  // Compare this run's findings to the last run of this same file: an issue
+  // that was flagged before and is gone now counts as resolved; one that's
+  // still flagged counts as persisted. Rolled up per rule, that produces a
+  // 0-100 reliability score this run's report can act on (advisory only —
+  // it never changes what rules actually run).
+  let historyResult = null;
+  if (!opts.noHistory) {
+    historyResult = auditHistory.recordRun(opts.fileKey, allIssues, {
+      timestamp,
+      historyDir: opts.historyDir,
+    });
+
+    for (const issue of allIssues) {
+      issue.reliability = historyResult.ruleScores[issue.ruleId] || null;
+    }
+
+    if (historyResult.isFirstRun) {
+      console.log('  Self-scoring: first run for this file — establishing baseline for next time.');
+    } else {
+      const { fixed, recurring, new: newCt } = historyResult.diffSummary;
+      console.log(`  Self-scoring: ${fixed} fixed since last run, ${recurring} still open, ${newCt} new.`);
+    }
+  }
+
+  // --- Phase 7: Generate report ---
   console.log('\n  Generating report...');
 
   const reportContent = reporter.generateReport({
@@ -340,6 +417,7 @@ async function main() {
     issues: allIssues,
     timestamp,
     profile,
+    historyResult,
   });
 
   reporter.writeReport(
@@ -350,7 +428,7 @@ async function main() {
   );
 
   // --- Summary ---
-  reporter.printSummary(allIssues, profile);
+  reporter.printSummary(allIssues, profile, historyResult);
 
   if (opts.dryRun) {
     console.log('  (Dry run — no comments were posted to Figma)');

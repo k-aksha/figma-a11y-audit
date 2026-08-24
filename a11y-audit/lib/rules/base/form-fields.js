@@ -3,7 +3,7 @@
  * WCAG 1.3.1, 3.3.2, 3.3.1, 3.3.3 — Form input labels and error messages.
  */
 
-const { isFormInput } = require('../node-inspector');
+const { isFormInput } = require('../../node-inspector');
 
 module.exports = {
   id: 'form-fields',

@@ -3,7 +3,7 @@
  * WCAG 1.4.4, 1.4.12, 1.3.1 — Text sizing, line height, heading hierarchy.
  */
 
-const { isHeadingNode } = require('../node-inspector');
+const { isHeadingNode } = require('../../node-inspector');
 
 module.exports = {
   id: 'text-sizing',

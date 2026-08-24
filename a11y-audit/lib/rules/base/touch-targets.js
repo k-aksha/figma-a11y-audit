@@ -3,7 +3,7 @@
  * WCAG 2.5.8 (AA), 2.5.5 (AAA) — Minimum target size for interactive elements.
  */
 
-const { isInteractiveNode } = require('../node-inspector');
+const { isInteractiveNode } = require('../../node-inspector');
 
 module.exports = {
   id: 'touch-targets',
